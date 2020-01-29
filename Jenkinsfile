@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('build') {
             steps {
-                echo 'Building..'
+                sh 'python --version'
             }
-        }
         stage('Test') {
             steps {
-                echo 'Testing..'
+                sh './test_pcf8591.py'
             }
         }
         stage('Deploy') {
