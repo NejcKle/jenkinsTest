@@ -143,16 +143,6 @@ class Pcf8591(object):
         return control_byte
 
 #test
-'''
-pin = 0
-i2c_address = DEVICE_ADDRESS << 3
-address = i2c_address | pin
-print(address)
-i2c_bus.write_quick(address)
-print(i2c_bus.read_byte(address)) #empty read, always returns 80h
-print(i2c_bus.read_byte(address))
-
-'''
 #pcf = Pcf8591(0, 0, 0, 5.15, 0.0)
 '''
 pcf.DAC(0)
