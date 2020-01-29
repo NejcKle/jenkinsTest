@@ -6,6 +6,7 @@ pipeline {
             steps {
                 sh 'python --version'
             }
+        }
         stage('Test') {
             steps {
                 sh './test_pcf8591.py'
@@ -16,5 +17,6 @@ pipeline {
                 echo 'Deploying....'
             }
         }
+    
     }
 }
