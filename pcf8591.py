@@ -1,4 +1,4 @@
-import smbus
+import smbus2
 import logging
 import time
 '''
@@ -13,7 +13,7 @@ class Pcf8591(object):
     def __init__(self, A0, A1, A2, vref, vagnd):
         """Init smbus channel and Pcf8591 driver on specified address."""
         try:
-            self.i2c_bus = smbus.SMBus(1)
+            self.i2c_bus = smbus2.SMBus(1)
             self.i2c_address = DEVICE_ADDRESS << 3 | A2 << 2 | A1 << 1 | A0
             self.ref_voltage = vref
             self.agnd_voltage = vagnd
