@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('build') {
+        stage('Setup') {
             steps {
-                sh 'python --version'
+                sh 'pip3 install -r test_requirements.txt'
             }
         }
         stage('Test') {
