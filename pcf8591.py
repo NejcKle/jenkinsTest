@@ -26,19 +26,30 @@ class Pcf8591(object):
             logging.info("Available busses are listed as /dev/i2c*")
             self.i2c_bus = None
     
-    def DAC(self, digital_value):
+    def analog_write(self, digital_value):
         """Converts discrete value and sets voltage on pin AOUT."""
-        control_byte = self.set_control_byte(0, False, 0, True)
-        #writing 2 bytes of data
-        self.i2c_bus.write_byte_data(self.i2c_address, control_byte, digital_value)
+        if (digital_value < 0 or digital_value > 255): return False
+
+        try:
+            control_byte = self.set_control_byte(0, False, 0, True)
+            #writing 2 bytes of data
+            self.i2c_bus.write_byte_data(self.i2c_address, control_byte, digital_value)
+        except IOError:
+            return False
+
+        return True
     
     def analog_read_raw(self, pin):
         """Returns raw value read on specified pin -- only to be used internally."""
-        control_byte = self.set_control_byte(pin, False, 0, False)
-        #writing one byte of data
-        self.i2c_bus.write_byte(self.i2c_address, control_byte)
+        try:
+            control_byte = self.set_control_byte(pin, False, 0, False)
+            #writing one byte of data
+            self.i2c_bus.write_byte(self.i2c_address, control_byte)
 
-        self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+            self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+        except IOError:
+            return False
+
         return self.i2c_bus.read_byte(self.i2c_address)
 
     def analog_read_AIN0_raw(self):
@@ -59,26 +70,33 @@ class Pcf8591(object):
 
     def analog_read_all_raw(self):
         """Returns list of raw readouts on pins A0 to A4."""
-        reads = [] #list of reads from all channels (4)
+        try:
+            reads = [] #list of reads from all channels (4)
 
-        control_byte = self.set_control_byte(0, True, 0, False) #auto ad_channel
-       # print(control_byte)
-        self.i2c_bus.write_byte(self.i2c_address, control_byte)
-        self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+            control_byte = self.set_control_byte(0, True, 0, False) #auto ad_channel
+        # print(control_byte)
+            self.i2c_bus.write_byte(self.i2c_address, control_byte)
+            self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
 
-        reads.append(self.i2c_bus.read_byte(self.i2c_address))
-        reads.append(self.i2c_bus.read_byte(self.i2c_address))
-        reads.append(self.i2c_bus.read_byte(self.i2c_address))
-        reads.append(self.i2c_bus.read_byte(self.i2c_address))
+            reads.append(self.i2c_bus.read_byte(self.i2c_address))
+            reads.append(self.i2c_bus.read_byte(self.i2c_address))
+            reads.append(self.i2c_bus.read_byte(self.i2c_address))
+            reads.append(self.i2c_bus.read_byte(self.i2c_address))
+        except IOError:
+            return False
 
         return reads
 
     def voltage_read(self, pin):
         """Returns read voltage on specified pin -- only to be used internally."""
-        control_byte = self.set_control_byte(pin, False, 0, False)
+        try:
+            control_byte = self.set_control_byte(pin, False, 0, False)
 
-        self.i2c_bus.write_byte(self.i2c_address, control_byte)
-        self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+            self.i2c_bus.write_byte(self.i2c_address, control_byte)
+            self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+        except IOError:
+            return False
+
         return (self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address)
 
     def voltage_read_AIN0(self):
@@ -99,17 +117,20 @@ class Pcf8591(object):
 
     def voltage_read_all(self):
         """Returns list of voltage readouts on pins A0 to A4."""
-        reads = []
+        try:
+            reads = []
 
-        control_byte = self.set_control_byte(0, True, 0, False) #auto increment ad_channel
+            control_byte = self.set_control_byte(0, True, 0, False) #auto increment ad_channel
 
-        self.i2c_bus.write_byte(self.i2c_address, control_byte)
-        self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
+            self.i2c_bus.write_byte(self.i2c_address, control_byte)
+            self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
 
-        reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-        reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-        reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-        reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+        except IOError:
+            return False
 
         return reads
 
@@ -143,9 +164,21 @@ class Pcf8591(object):
         return control_byte
 
 #test
-#pcf = Pcf8591(0, 0, 0, 5.15, 0.0)
 '''
-pcf.DAC(0)
+pin = 0
+i2c_address = DEVICE_ADDRESS << 3
+address = i2c_address | pin
+print(address)
+i2c_bus.write_quick(address)
+print(i2c_bus.read_byte(address)) #empty read, always returns 80h
+print(i2c_bus.read_byte(address))
+
+'''
+'''
+pcf = Pcf8591(0, 0, 0, 5.15, 0.0)
+
+print(pcf.DAC(0))
+
 time.sleep(1)
 pcf.DAC(127)
 time.sleep(1)
@@ -170,8 +203,6 @@ print(V1)
 print(V2)
 print(V3)
 '''
-
-
 '''
 reads = pcf.analog_read_all_raw()
 for i in range(len(reads)):

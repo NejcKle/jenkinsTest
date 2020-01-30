@@ -4,17 +4,19 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh 'pip3 install -r test_requirements.txt'
+                sh 'pip3 install -r unit_test_requirements.txt'
             }
         }
-        stage('Test') {
+        stage('Unit Testing') {
             steps {
+                echo 'Running unit tests...'
                 sh 'python3 ./test_pcf8591.py'
             }
         }
-        stage('Deploy') {
+        stage('Hardware Testing') {
             steps {
-                echo 'Deploying....'
+                echo 'Running hardware tests...'
+                "sh 'python3 ./test_pcf_system.py'"
             }
         }
     
