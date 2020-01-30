@@ -11,7 +11,7 @@ pipeline {
         stage('Unit Testing') {
             steps {
                 echo 'Running unit tests...'
-                sh 'python3 ./test_pcf8591.py'
+                sh 'python3 -m unittest -v test_pcf8591.py'
             }
         }
         stage('Hardware Testing') {
