@@ -4,6 +4,7 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
+                echo 'Running setup...'
                 sh 'pip3 install -r unit_test_requirements.txt'
             }
         }
@@ -16,7 +17,6 @@ pipeline {
         stage('Hardware Testing') {
             steps {
                 echo 'Running hardware tests...'
-                "sh 'python3 ./test_pcf_system.py'"
             }
         }
     
