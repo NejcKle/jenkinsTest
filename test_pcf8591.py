@@ -10,7 +10,6 @@ ADRESS_GOOD = 0x09 #address of device, pins append to address later
 VREF = 5.15
 VAGND = 0.0
 
-
 @parameterized_class(('A0', 'A1', 'A2'), [
     # This will run the test class once for each address
     (0, 0, 0),

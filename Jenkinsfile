@@ -6,6 +6,7 @@ pipeline {
             steps {
                 echo 'Running setup...'
                 sh 'pip3 install -r unit_test_requirements.txt'
+                sh 'python3 tca9548a.py'
             }
         }
         stage('Unit Testing') {
