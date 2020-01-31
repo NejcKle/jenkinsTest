@@ -4,9 +4,13 @@ import time
 '''
 The address consists of a fixed part and a programmable part. The programmable
 part must be set according to the address pins A0, A1 and A2. 
+
+!!! IMPORTANT !!!
+When using internal oscillator EXT pin must be wired to Vss
 '''
 
 DEVICE_ADDRESS = 0x09
+USING_INTERNAL_OSCILLATOR = True #when using internal oscillator analog output enable flag should be set to True
 
 class Pcf8591(object):
     #A0, A1, A2 should be either 0 or 1, vref is reference voltage for analog pins, vagnd is analog ground
@@ -15,7 +19,7 @@ class Pcf8591(object):
         try:
             self.i2c_bus = smbus2.SMBus(1)
             self.i2c_address = DEVICE_ADDRESS << 3 | A2 << 2 | A1 << 1 | A0
-            self.ref_voltage = vref
+            self.ref_voltage = vref #reference voltage and analog ground voltage are necessary for converting digital readings to 
             self.agnd_voltage = vagnd
 
             if (vref - vagnd < 0):
@@ -26,12 +30,13 @@ class Pcf8591(object):
             logging.info("Available busses are listed as /dev/i2c*")
             self.i2c_bus = None
     
+    """ ------------------------------- DAC ------------------------------- """
     def analog_write(self, digital_value):
         """Converts discrete value and sets voltage on pin AOUT."""
         if (digital_value < 0 or digital_value > 255): return False
 
         try:
-            control_byte = self.set_control_byte(0, False, 0, True)
+            control_byte = self.set_control_byte(0, False, 0, USING_INTERNAL_OSCILLATOR)
             #writing 2 bytes of data
             self.i2c_bus.write_byte_data(self.i2c_address, control_byte, digital_value)
         except IOError:
@@ -39,42 +44,54 @@ class Pcf8591(object):
 
         return True
     
-    def analog_read_raw(self, pin):
-        """Returns raw value read on specified pin -- only to be used internally."""
-        try:
-            control_byte = self.set_control_byte(pin, False, 0, False)
-            #writing one byte of data
-            self.i2c_bus.write_byte(self.i2c_address, control_byte)
+    """ ------------------------------- ADC ------------------------------- """
+    def trigger_ADC_on_pin(self, pin):
+        """Triggers ADC on selected pin"""
+        control_byte = self.set_control_byte(pin, False, 0, USING_INTERNAL_OSCILLATOR)
+        #writing one byte of data
+        self.i2c_bus.write_byte(self.i2c_address, control_byte)
 
+    def disable_ADC_on_pin(self, pin):
+        """Disables ADC on selected pin -- not used"""
+        control_byte = self.set_control_byte(0, False, 0, False)
+        #writing one byte of data
+        self.i2c_bus.write_byte(self.i2c_address, control_byte)
+
+    def analog_read_raw(self, pin):
+        """Returns raw discrete value read on specified pin -- only to be used internally."""
+        try:
+            self.trigger_ADC_on_pin(pin)
             self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
         except IOError:
             return False
 
-        return self.i2c_bus.read_byte(self.i2c_address)
+        value = self.i2c_bus.read_byte(self.i2c_address)
+        #self.disable_ADC_on_pin(pin)
+        return value
 
     def analog_read_AIN0_raw(self):
-        """Returns raw value read on pin A0."""
+        """Returns raw discrete value read on pin A0."""
         return self.analog_read_raw(0)
 
     def analog_read_AIN1_raw(self):
-        """Returns raw value read on pin A1."""
+        """Returns raw discrete value read on pin A1."""
         return self.analog_read_raw(1)
 
     def analog_read_AIN2_raw(self):
-        """Returns raw value read on pin A2."""
+        """Returns raw discrete value read on pin A2."""
         return self.analog_read_raw(2)
 
     def analog_read_AIN3_raw(self):
-        """Returns raw value read on pin A3."""
+        """Returns raw discrete value read on pin A3."""
         return self.analog_read_raw(3)
 
     def analog_read_all_raw(self):
-        """Returns list of raw readouts on pins A0 to A4."""
+        """Returns list of raw discrete readouts on pins A0 to A4."""
         try:
             reads = [] #list of reads from all channels (4)
 
-            control_byte = self.set_control_byte(0, True, 0, False) #auto ad_channel
-        # print(control_byte)
+            control_byte = self.set_control_byte(0, True, 0, USING_INTERNAL_OSCILLATOR) #auto increment ad_channel, Analog output enable - must be set to True if using internal oscillator
+
             self.i2c_bus.write_byte(self.i2c_address, control_byte)
             self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
 
@@ -90,14 +107,12 @@ class Pcf8591(object):
     def voltage_read(self, pin):
         """Returns read voltage on specified pin -- only to be used internally."""
         try:
-            control_byte = self.set_control_byte(pin, False, 0, False)
-
-            self.i2c_bus.write_byte(self.i2c_address, control_byte)
+            self.trigger_ADC_on_pin(pin)
             self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
         except IOError:
             return False
 
-        return (self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address)
+        return (self.ref_voltage - self.agnd_voltage) / 255.0 * self.i2c_bus.read_byte(self.i2c_address)
 
     def voltage_read_AIN0(self):
         """Returns read voltage on pin A0."""
@@ -120,15 +135,15 @@ class Pcf8591(object):
         try:
             reads = []
 
-            control_byte = self.set_control_byte(0, True, 0, False) #auto increment ad_channel
+            control_byte = self.set_control_byte(0, True, 0, USING_INTERNAL_OSCILLATOR) #auto increment ad_channel, Analog output enable - must be set to True if using internal oscillator
 
             self.i2c_bus.write_byte(self.i2c_address, control_byte)
             self.i2c_bus.read_byte(self.i2c_address) #empty read, always returns 80h
-
-            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
-            reads.append((self.ref_voltage - self.agnd_voltage) / 256.0 * self.i2c_bus.read_byte(self.i2c_address))
+            
+            reads.append((self.ref_voltage - self.agnd_voltage) / 255.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 255.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 255.0 * self.i2c_bus.read_byte(self.i2c_address))
+            reads.append((self.ref_voltage - self.agnd_voltage) / 255.0 * self.i2c_bus.read_byte(self.i2c_address))
         except IOError:
             return False
 
@@ -163,52 +178,42 @@ class Pcf8591(object):
         control_byte |= ad_channel
         return control_byte
 
-#test
+"""TEST CODE"""
+#pcf = Pcf8591(0, 0, 0, 3.3, 0)
 '''
-pin = 0
-i2c_address = DEVICE_ADDRESS << 3
-address = i2c_address | pin
-print(address)
-i2c_bus.write_quick(address)
-print(i2c_bus.read_byte(address)) #empty read, always returns 80h
-print(i2c_bus.read_byte(address))
-
-'''
-'''
-pcf = Pcf8591(0, 0, 0, 5.15, 0.0)
-
-print(pcf.DAC(0))
+time.sleep(1)
+print(pcf.analog_write(0))
 
 time.sleep(1)
-pcf.DAC(127)
+pcf.analog_write(62)
 time.sleep(1)
-pcf.DAC(255)
+pcf.analog_write(127)
 time.sleep(1)
-
-A0 = pcf.analog_read_A0_raw()
-A1 = pcf.analog_read_A1_raw()
-A2 = pcf.analog_read_A2_raw()
-A3 = pcf.analog_read_A3_raw()
-print(A0)
-print(A1)
-print(A2)
-print(A3)
-
-V0 = pcf.voltage_read_A0()
-V1 = pcf.voltage_read_A1()
-V2 = pcf.voltage_read_A2()
-V3 = pcf.voltage_read_A3()
-print(V0)
-print(V1)
-print(V2)
-print(V3)
+pcf.analog_write(190)
+time.sleep(1)
+pcf.analog_write(250)
+time.sleep(1)
 '''
 '''
-reads = pcf.analog_read_all_raw()
-for i in range(len(reads)):
-    print(reads[i])
+for i in range(5000):
+    AIN0 = pcf.analog_read_AIN0_raw()
+    print("AIN0: {}".format(AIN0))
+    AIN1 = pcf.analog_read_AIN1_raw()
+    print("AIN1: {}".format(AIN1))
+    AIN2 = pcf.analog_read_AIN2_raw()
+    print("AIN2: {}".format(AIN2))
+    AIN3 = pcf.analog_read_AIN3_raw()
+    print("AIN3: {}".format(AIN3))
+    print("")
+'''
+'''
+    reads = pcf.analog_read_all_raw()
+    for i in range(len(reads)):
+        print("A{}: {}".format(i, reads[i]))
 
-reads = pcf.voltage_read_all()
-for i in range(len(reads)):
-    print(reads[i])
-    '''
+    print("")
+    reads = pcf.voltage_read_all()
+    for i in range(len(reads)):
+        print("V{}: {}v".format(i, reads[i]))
+    print("")
+'''

@@ -82,7 +82,7 @@ class TCA9548A(object):
 # ------------------------ Test code ----------------------------
 tca = TCA9548A(0x70)
 print(bin(tca.get_control_register()))
-num = int("00010000", 2)
+num = int("00001000", 2)
 tca.set_control_register(num)    # enable all connected devices
 print(bin(tca.get_control_register()))
 '''

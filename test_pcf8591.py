@@ -20,23 +20,21 @@ VAGND = 0.0
 ])
 class TestPcf8591Driver(unittest.TestCase):
 
-    # This runs once before test methods in this class are run
+    #This runs once before test methods in this class are run
     @classmethod
     def setUpClass(cls):
-        cls.driverGood = Pcf8591(cls.A0, cls.A1, cls.A2, VREF, VAGND)  # use in all funtions
+        cls.driverGood = Pcf8591(cls.A0, cls.A1, cls.A2, VREF, VAGND)  #use in all funtions
         cls.driverBad = Pcf8591(-1, -1, -1, VREF, VAGND)
 
-    # This runs before every test method
-   # def setUp(self):
+    #This runs before every test method
+    #def setUp(self):
         #empty
 
     """ --------------------------- Init tests ----------------------- """
     def test_class_init_good_address(self):
-        #driverGood = Pcf8591(self.A0, self.A1, self.A2, VREF, VAGND)
         self.assertIsNotNone(self.driverGood.i2c_bus, "Address is good, so i2c bus must be Not None")
 
     def test_class_init_good_params(self):
-        #driverGood = Pcf8591(self.A0, self.A1, self.A2, VREF, VAGND)
         self.assertIsNotNone(self.driverGood.i2c_bus, "Vref - Vagnd is greater than 0, so i2c bus must be Not None")
 
     def test_class_init_bad_params(self):
@@ -45,37 +43,37 @@ class TestPcf8591Driver(unittest.TestCase):
 
     """ --------------------------- Control byte settings tests ----------------------- """
     def test_control_byte_dac(self):
-        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, True), 64, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, True), 0x40, "Wrong value set in set_control_byte")
 
     def test_control_byte_analog_read_AIN0_raw(self):
-        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, False), 0, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, True), 0x40, "Wrong value set in set_control_byte")
 
     def test_control_byte_analog_read_AIN1_raw(self):
-        self.assertEqual(self.driverGood.set_control_byte(1, False, 0, False), 1, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(1, False, 0, True), 0x41, "Wrong value set in set_control_byte")
 
     def test_control_byte_analog_read_AIN2_raw(self):
-        self.assertEqual(self.driverGood.set_control_byte(2, False, 0, False), 2, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(2, False, 0, True), 0x42, "Wrong value set in set_control_byte")
 
     def test_control_byte_analog_read_AIN3_raw(self):
-        self.assertEqual(self.driverGood.set_control_byte(3, False, 0, False), 3, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(3, False, 0, True), 0x43, "Wrong value set in set_control_byte")
 
     def test_control_byte_analog_read_all_raw(self):
-        self.assertEqual(self.driverGood.set_control_byte(0, True, 0, False), 4, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(0, True, 0, True), 0x44, "Wrong value set in set_control_byte")
 
     def test_control_byte_voltage_read_AIN0(self):
-        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, False), 0, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(0, False, 0, True), 0x40, "Wrong value set in set_control_byte")
 
     def test_control_byte_voltage_read_AIN1(self):
-        self.assertEqual(self.driverGood.set_control_byte(1, False, 0, False), 1, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(1, False, 0, True), 0x41, "Wrong value set in set_control_byte")
 
     def test_control_byte_voltage_read_AIN2(self):
-        self.assertEqual(self.driverGood.set_control_byte(2, False, 0, False), 2, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(2, False, 0, True), 0x42, "Wrong value set in set_control_byte")
 
     def test_control_byte_voltage_read_AIN3(self):
-        self.assertEqual(self.driverGood.set_control_byte(3, False, 0, False), 3, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(3, False, 0, True), 0x43, "Wrong value set in set_control_byte")
 
     def test_control_byte_voltage_read_all(self):
-        self.assertEqual(self.driverGood.set_control_byte(0, True, 0, False), 4, "Wrong value set in set_control_byte")
+        self.assertEqual(self.driverGood.set_control_byte(0, True, 0, True), 0x44, "Wrong value set in set_control_byte")
        
     """ --------------------------- Dac tests with good address ----------------------- """
     def test_dac_lower_bound(self):
