@@ -5,7 +5,7 @@ from parameterized import parameterized, parameterized_class
 from pcf8591 import Pcf8591
 from random import randrange
 
-ADRESS_GOOD = 0x09 #address of device, pins append to address later
+ADRESS_GOOD = 0x09  # address of device, pins append to address later
 
 VREF = 5.15
 VAGND = 0.0
@@ -74,7 +74,7 @@ class TestPcf8591Driver(unittest.TestCase):
 
     def test_control_byte_voltage_read_all(self):
         self.assertEqual(self.driverGood.set_control_byte(0, True, 0, True), 0x44, "Wrong value set in set_control_byte")
-       
+
     """ --------------------------- Dac tests with good address ----------------------- """
     def test_dac_lower_bound(self):
         self.assertEqual(self.driverGood.analog_write(0), True, "Digital input is 0, return value should be True")
